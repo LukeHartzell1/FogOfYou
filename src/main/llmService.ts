@@ -10,7 +10,7 @@ export class LLMService {
   }
 
   private initialize() {
-    const apiKey = store.get('settings.apiKey') as string;
+    const apiKey = (store.get('settings.apiKey') as string) || process.env.GEMINI_API_KEY || '';
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
