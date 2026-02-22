@@ -182,8 +182,9 @@ export class AgentRunner extends EventEmitter {
 
     while (this.isActive(persona.id) && this.isPageAlive(page)) {
       try {
-        // Try LLM-generated targets first
-        let targets = await llmService.generateBrowseTargets(persona.interests);
+        // Try LLM-generated targets first — count varies by intensity
+        const targetCount = INTENSITY_TARGETS[persona.intensity] || 5;
+        let targets = await llmService.generateBrowseTargets(persona.interests, targetCount);
 
         if (targets && targets.length > 0) {
           consecutiveFailures = 0;

@@ -136,7 +136,7 @@ export class LLMService {
     }
   }
 
-  async generateBrowseTargets(interests: string[]): Promise<BrowseTarget[]> {
+  async generateBrowseTargets(interests: string[], count: number = 5): Promise<BrowseTarget[]> {
     try {
       const now = Date.now();
       if (now < this.rateLimitedUntil) {
@@ -149,14 +149,15 @@ export class LLMService {
       const siteNames = SITES.map(s => s.name).join(', ');
       const prompt = `You help generate realistic browsing activity. A user is interested in: ${interests.join(', ')}.
 
-Generate exactly 5 browsing targets. For each, provide a site name and a topic/keyword to search or look up on that site.
+Generate exactly ${count} browsing targets. For each, provide a site name and a topic/keyword to search or look up on that site.
+Each target MUST use a DIFFERENT site — spread across as many unique sites as possible for maximum diversity.
 For Wikipedia, use real article titles that exist (e.g. "Sourdough", "Machine learning", "Tokyo").
 For other sites, use natural search terms (e.g. "easy pasta recipes", "latest tech news", "running shoes").
 
 Available sites: ${siteNames}
 
 Return ONLY a JSON array, no other text. Example:
-[{"site":"Wikipedia","topic":"Sourdough"},{"site":"AllRecipes","topic":"chicken soup recipe"},{"site":"BBC News","topic":"climate change"},{"site":"YouTube","topic":"how to garden"},{"site":"Amazon","topic":"running shoes"}]`;
+[{"site":"Wikipedia","topic":"Sourdough"},{"site":"AllRecipes","topic":"chicken soup recipe"},{"site":"BBC News","topic":"climate change"},{"site":"NPR","topic":"how to garden"},{"site":"Britannica","topic":"running biomechanics"}]`;
 
       const result = await this.model.generateContent(prompt);
       const response = await result.response;
