@@ -8,8 +8,8 @@ import path from 'path';
 
 const INTENSITY_DELAYS = {
   low:    { min: 8000,  max: 15000 },
-  medium: { min: 2000,  max: 7000  },
-  high:   { min: 500,   max: 2000  }
+  medium: { min: 3000,  max: 7000  },
+  high:   { min: 1000,  max: 3000  }
 };
 
 const INTENSITY_SCROLL = {
@@ -104,7 +104,6 @@ export class AgentRunner extends EventEmitter {
 
   private async runLoop(persona: Persona, page: Page) {
     const delays = INTENSITY_DELAYS[persona.intensity] || INTENSITY_DELAYS.medium;
-    const safeList: string[] = store.get('settings.safeList') || [];
 
     while (this.activePersonas.has(persona.id) && this.isPageAlive(page)) {
       try {
@@ -114,81 +113,59 @@ export class AgentRunner extends EventEmitter {
           break;
         }
 
-        const queries = await llmService.generateSearchQueries(persona.interests);
+        const targets = await llmService.generateBrowseTargets(persona.interests);
 
-        if (!queries || queries.length === 0) {
+        if (!targets || targets.length === 0) {
+          console.log(`No targets generated for ${persona.name}, waiting...`);
           await this.safeSleep(page, 30000);
           continue;
         }
 
-        for (const query of queries) {
+        for (const target of targets) {
           if (!this.activePersonas.has(persona.id) || !this.isPageAlive(page)) break;
+
+          const domain = extractDomain(target.url) || target.site;
 
           this.emit('activity', {
             personaId: persona.id,
             personaName: persona.name,
             type: 'search',
-            details: `Searching: "${query}"`
+            details: `Looking up "${target.topic}" on ${target.site}`
           });
 
           try {
-            await page.goto('https://www.google.com');
-            const searchBox = await page.$('textarea[name="q"]') || await page.$('input[name="q"]');
-            if (searchBox) {
-              await searchBox.fill(query);
-              await searchBox.press('Enter');
-              await this.safeSleep(page, 3000);
+            console.log(`[${persona.name}] Navigating to ${target.url}`);
+            await page.goto(target.url, { waitUntil: 'domcontentloaded', timeout: 15000 });
 
-              const metrics = store.get('metrics');
-              store.set('metrics', { ...metrics, totalQueries: metrics.totalQueries + 1 });
+            const metrics = store.get('metrics');
+            const domainVisits = {
+              ...(metrics.domainVisits || {}),
+              [domain]: ((metrics.domainVisits || {})[domain] || 0) + 1
+            };
+            const uniqueDomains = [...new Set([...metrics.uniqueDomains, domain])];
+            const entropyScore = calcEntropy(domainVisits);
+            store.set('metrics', {
+              ...metrics,
+              totalQueries: metrics.totalQueries + 1,
+              uniqueDomains,
+              entropyScore,
+              domainVisits
+            });
 
-              const links = await page.$$('div.g a');
-              if (links.length > 0) {
-                let chosenHref: string | null = null;
+            this.emit('activity', {
+              personaId: persona.id,
+              personaName: persona.name,
+              type: 'visit',
+              details: `Browsing ${target.site}: "${target.topic}"`
+            });
 
-                for (let i = 0; i < Math.min(links.length, 5); i++) {
-                  const candidate = links[Math.floor(Math.random() * Math.min(links.length, 5))];
-                  const href = await candidate.getAttribute('href');
-                  if (!href || href.includes('google.com')) continue;
+            await this.simulateReading(page, persona.intensity);
 
-                  if (safeList.length > 0) {
-                    const domain = extractDomain(href);
-                    if (!domain || !safeList.some(s => domain.includes(s))) continue;
-                  }
-
-                  chosenHref = href;
-                  break;
-                }
-
-                if (chosenHref) {
-                  const domain = extractDomain(chosenHref) || chosenHref;
-
-                  this.emit('activity', {
-                    personaId: persona.id,
-                    personaName: persona.name,
-                    type: 'visit',
-                    details: `Visiting: ${domain}`
-                  });
-
-                  await page.goto(chosenHref);
-
-                  const m = store.get('metrics');
-                  const domainVisits = { ...(m.domainVisits || {}), [domain]: ((m.domainVisits || {})[domain] || 0) + 1 };
-                  const uniqueDomains = [...new Set([...m.uniqueDomains, domain])];
-                  const entropyScore = calcEntropy(domainVisits);
-                  store.set('metrics', { ...m, uniqueDomains, entropyScore, domainVisits });
-
-                  this.emit('activity', {
-                    personaId: persona.id,
-                    personaName: persona.name,
-                    type: 'scroll',
-                    details: `Reading page on ${domain}`
-                  });
-
-                  await this.simulateReading(page, persona.intensity);
-                }
-              }
+            // Occasionally click a link on the page to go deeper
+            if (Math.random() > 0.5 && this.isPageAlive(page)) {
+              await this.clickRandomLink(page, persona, domain);
             }
+
           } catch (e: any) {
             if (e?.message?.includes('Target page') || e?.message?.includes('has been closed')) {
               console.log(`Browser closed for ${persona.name}, ending loop.`);
@@ -196,7 +173,7 @@ export class AgentRunner extends EventEmitter {
               this.contexts.delete(persona.id);
               return;
             }
-            console.error(`Error during search/navigation: ${e}`);
+            console.error(`Error visiting ${target.url}: ${e.message}`);
           }
 
           const delay = Math.random() * (delays.max - delays.min) + delays.min;
@@ -211,8 +188,50 @@ export class AgentRunner extends EventEmitter {
           return;
         }
         console.error(`Error in agent loop for ${persona.name}:`, error);
-        await this.safeSleep(page, 5000);
+        await this.safeSleep(page, 10000);
       }
+    }
+  }
+
+  private async clickRandomLink(page: Page, persona: Persona, currentDomain: string) {
+    try {
+      const links = await page.$$('a[href]');
+      const candidates: string[] = [];
+
+      for (const link of links.slice(0, 20)) {
+        const href = await link.getAttribute('href');
+        if (!href) continue;
+        const full = href.startsWith('http') ? href : null;
+        if (full && !full.includes('login') && !full.includes('signup') && !full.includes('auth')) {
+          const linkDomain = extractDomain(full);
+          if (linkDomain && linkDomain.includes(currentDomain)) {
+            candidates.push(full);
+          }
+        }
+      }
+
+      if (candidates.length > 0) {
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        const domain = extractDomain(chosen) || currentDomain;
+
+        this.emit('activity', {
+          personaId: persona.id,
+          personaName: persona.name,
+          type: 'visit',
+          details: `Following link on ${domain}`
+        });
+
+        await page.goto(chosen, { waitUntil: 'domcontentloaded', timeout: 15000 });
+
+        const m = store.get('metrics');
+        const domainVisits = { ...(m.domainVisits || {}), [domain]: ((m.domainVisits || {})[domain] || 0) + 1 };
+        const uniqueDomains = [...new Set([...m.uniqueDomains, domain])];
+        store.set('metrics', { ...m, uniqueDomains, entropyScore: calcEntropy(domainVisits), domainVisits });
+
+        await this.simulateReading(page, persona.intensity);
+      }
+    } catch (e) {
+      // Non-critical, just skip
     }
   }
 
@@ -229,7 +248,7 @@ export class AgentRunner extends EventEmitter {
         if (Math.random() < config.stopChance) break;
       }
     } catch (e) {
-      console.error(`Error simulating reading: ${e}`);
+      // Page may have been closed during scroll
     }
   }
 }
