@@ -17,7 +17,15 @@ const store = new Store<StoreSchema>({
     personas: [],
     settings: {
       apiKey: '',
-      safeList: ['wikipedia.org', 'allrecipes.com', 'bbc.com', 'cnn.com', 'medium.com'],
+      safeList: [
+        'wikipedia.org', 'allrecipes.com', 'bbc.com', 'cnn.com', 'medium.com',
+        'amazon.com', 'youtube.com',
+        'reuters.com', 'apnews.com', 'npr.org', 'pbs.org',
+        'simplyrecipes.com', 'budgetbytes.com', 'seriouseats.com',
+        'britannica.com', 'howstuffworks.com', 'wikihow.com',
+        'instructables.com', 'archive.org', 'imdb.com', 'dev.to',
+        'duckduckgo.com', 'weather.gov', 'goodreads.com', 'craigslist.org'
+      ],
       killSwitch: false
     },
     metrics: {

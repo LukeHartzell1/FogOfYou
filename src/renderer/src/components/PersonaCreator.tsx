@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Persona } from '../types'
+import { PERSONA_TEMPLATES, PersonaTemplate } from '../personaTemplates'
 import { ArrowLeft, Save, Hash, Clock, Sparkles, Info } from 'lucide-react'
 
 interface Props {
@@ -8,12 +9,7 @@ interface Props {
   onCancel: () => void
 }
 
-const PRESETS = [
-  { name: 'Midwest Soccer Parent', interests: 'Youth Soccer, School Events, Minivan Reviews, Grocery Deals, Local News' },
-  { name: 'Retired Home Hobbyist', interests: 'Woodworking, Home Improvement, Garden, Bird Watching, Classic Cars' },
-  { name: 'Luxury Travel Planner', interests: 'Business Class Flights, Hotel Reviews, Fine Dining, City Guides, Concierge Tips' },
-  { name: 'K-pop Superfan',        interests: 'K-pop News, Idol Groups, Concert Tickets, Korean Fashion, Fan Art' },
-]
+const ALL_DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 const INTENSITY_HELP = {
   low: 'Best for light background activity.',
@@ -48,11 +44,23 @@ const PersonaCreator: React.FC<Props> = ({ initialPersona, onSave, onCancel }) =
   const [interests, setInterests] = useState((initialPersona?.interests ?? []).join(', '))
   const [start,     setStart]     = useState(initialPersona?.schedule.start ?? '19:00')
   const [end,       setEnd]       = useState(initialPersona?.schedule.end   ?? '23:00')
+  const [days,      setDays]      = useState<string[]>(initialPersona?.schedule.days ?? ALL_DAYS)
   const [intensity, setIntensity] = useState<'low'|'medium'|'high'>(initialPersona?.intensity ?? 'medium')
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null)
 
-  const applyPreset = (p: { name: string; interests: string }) => {
-    setName(p.name)
-    setInterests(p.interests)
+  const applyTemplate = (t: PersonaTemplate) => {
+    setName(t.name)
+    setAvatar(t.avatar)
+    setInterests(t.interests.join(', '))
+    setStart(t.schedule.start)
+    setEnd(t.schedule.end)
+    setDays(t.schedule.days)
+    setIntensity(t.intensity)
+    setSelectedTemplate(t.name)
+  }
+
+  const toggleDay = (day: string) => {
+    setDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day])
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -62,11 +70,13 @@ const PersonaCreator: React.FC<Props> = ({ initialPersona, onSave, onCancel }) =
       name,
       avatar,
       interests: interests.split(',').map(s => s.trim()).filter(Boolean),
-      schedule: { start, end, days: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] },
+      schedule: { start, end, days },
       intensity,
       isActive: false,
     })
   }
+
+  const isEditing = !!initialPersona
 
   return (
     <div className="max-w-2xl mx-auto fade-up">
@@ -83,9 +93,9 @@ const PersonaCreator: React.FC<Props> = ({ initialPersona, onSave, onCancel }) =
         </button>
         <div>
           <h1 className="text-xl font-bold tracking-tight" style={{ color: 'var(--text)' }}>
-            {initialPersona ? 'Edit Persona' : 'New Persona'}
+            {isEditing ? 'Edit Persona' : 'New Persona'}
           </h1>
-          <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Build a safe “cover identity” that behaves differently than you.</p>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--text-3)' }}>Build a safe "cover identity" that behaves differently than you.</p>
         </div>
       </div>
 
@@ -99,22 +109,26 @@ const PersonaCreator: React.FC<Props> = ({ initialPersona, onSave, onCancel }) =
         </div>
       </div>
 
-      {/* Presets (only when creating) */}
-      {!initialPersona && (
+      {/* Templates (only when creating) */}
+      {!isEditing && (
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-3)' }}>Quick Presets</p>
-          <div className="flex flex-wrap gap-2">
-            {PRESETS.map(p => (
+          <p className="text-xs font-semibold uppercase tracking-widest mb-3" style={{ color: 'var(--text-3)' }}>Templates</p>
+          <div className="grid grid-cols-4 gap-2">
+            {PERSONA_TEMPLATES.map(t => (
               <button
-                key={p.name}
+                key={t.name}
                 type="button"
-                onClick={() => applyPreset(p)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
-                style={{ background: 'var(--surface)', border: '1px solid var(--border-2)', color: 'var(--text-2)' }}
-                onMouseEnter={e => (e.currentTarget.style.borderColor = 'var(--blue)', e.currentTarget.style.color = 'var(--blue)')}
-                onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--border-2)', e.currentTarget.style.color = 'var(--text-2)')}
+                onClick={() => applyTemplate(t)}
+                className="p-2.5 rounded-lg text-left transition-all"
+                style={{
+                  background: selectedTemplate === t.name ? 'var(--blue-dim)' : 'var(--surface)',
+                  border: `1px solid ${selectedTemplate === t.name ? 'var(--blue)' : 'var(--border-2)'}`,
+                  color: 'var(--text-2)',
+                }}
               >
-                {p.name}
+                <span className="text-xl block mb-1">{t.avatar}</span>
+                <span className="text-xs font-medium block" style={{ color: 'var(--text)' }}>{t.name}</span>
+                <span className="text-[10px] block mt-0.5" style={{ color: 'var(--text-3)' }}>{t.interests.length} interests</span>
               </button>
             ))}
           </div>
@@ -132,8 +146,8 @@ const PersonaCreator: React.FC<Props> = ({ initialPersona, onSave, onCancel }) =
               onBlur={e  => (e.target.style.borderColor = 'var(--border-2)')} />
           </Field>
 
-          <Field label="Avatar URL (optional)">
-            <input style={inputStyle} value={avatar} onChange={e => setAvatar(e.target.value)} placeholder="https://example.com/avatar.png"
+          <Field label="Avatar (emoji or URL)">
+            <input style={inputStyle} value={avatar} onChange={e => setAvatar(e.target.value)} placeholder="👩‍🍳 or https://example.com/avatar.png"
               onFocus={e => (e.target.style.borderColor = 'var(--blue)')}
               onBlur={e  => (e.target.style.borderColor = 'var(--border-2)')} />
           </Field>
@@ -192,6 +206,27 @@ const PersonaCreator: React.FC<Props> = ({ initialPersona, onSave, onCancel }) =
               </p>
             </Field>
           </div>
+
+          {/* Day selector */}
+          <Field label="Active Days">
+            <div className="flex gap-2">
+              {ALL_DAYS.map(day => (
+                <button
+                  key={day}
+                  type="button"
+                  onClick={() => toggleDay(day)}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  style={{
+                    background: days.includes(day) ? 'var(--blue)' : 'var(--surface-2)',
+                    border: `1px solid ${days.includes(day) ? 'var(--blue)' : 'var(--border-2)'}`,
+                    color: days.includes(day) ? '#fff' : 'var(--text-3)',
+                  }}
+                >
+                  {day}
+                </button>
+              ))}
+            </div>
+          </Field>
         </section>
 
         {/* Actions */}

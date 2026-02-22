@@ -29,16 +29,84 @@ const SITES = [
     buildUrl: (topic: string) => `https://medium.com/search?q=${encodeURIComponent(topic)}`
   },
   {
-    name: 'Reddit',
-    buildUrl: (topic: string) => `https://www.reddit.com/search/?q=${encodeURIComponent(topic)}`
-  },
-  {
     name: 'Amazon',
     buildUrl: (topic: string) => `https://www.amazon.com/s?k=${encodeURIComponent(topic)}`
   },
   {
     name: 'YouTube',
     buildUrl: (topic: string) => `https://www.youtube.com/results?search_query=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Reuters',
+    buildUrl: (topic: string) => `https://www.reuters.com/search/news?query=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'AP News',
+    buildUrl: (topic: string) => `https://apnews.com/search#?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'NPR',
+    buildUrl: (topic: string) => `https://www.npr.org/search?query=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'PBS',
+    buildUrl: (topic: string) => `https://www.pbs.org/search/?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'SimplyRecipes',
+    buildUrl: (topic: string) => `https://www.simplyrecipes.com/search?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'BudgetBytes',
+    buildUrl: (topic: string) => `https://www.budgetbytes.com/?s=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'SeriousEats',
+    buildUrl: (topic: string) => `https://www.seriouseats.com/search?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Britannica',
+    buildUrl: (topic: string) => `https://www.britannica.com/search?query=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'HowStuffWorks',
+    buildUrl: (topic: string) => `https://www.howstuffworks.com/search?terms=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'WikiHow',
+    buildUrl: (topic: string) => `https://www.wikihow.com/wikiHowTo?search=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Instructables',
+    buildUrl: (topic: string) => `https://www.instructables.com/search/?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Archive.org',
+    buildUrl: (topic: string) => `https://archive.org/search?query=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'IMDB',
+    buildUrl: (topic: string) => `https://www.imdb.com/find/?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Dev.to',
+    buildUrl: (topic: string) => `https://dev.to/search?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'DuckDuckGo',
+    buildUrl: (topic: string) => `https://duckduckgo.com/?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Weather.gov',
+    buildUrl: (topic: string) => `https://www.weather.gov/search?query=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Goodreads',
+    buildUrl: (topic: string) => `https://www.goodreads.com/search?q=${encodeURIComponent(topic)}`
+  },
+  {
+    name: 'Craigslist',
+    buildUrl: (topic: string) => `https://www.craigslist.org/search/?query=${encodeURIComponent(topic)}`
   }
 ];
 
