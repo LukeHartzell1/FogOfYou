@@ -1,6 +1,6 @@
+import { randomUUID } from 'crypto';
 import store from './store';
 import { Persona } from './types';
-import { v4 as uuidv4 } from 'uuid';
 
 export class PersonaManager {
   static getAll(): Persona[] {
@@ -21,7 +21,7 @@ export class PersonaManager {
       return personas[existingIndex];
     } else {
       const newPersona: Persona = {
-        id: uuidv4(),
+        id: randomUUID(),
         name: persona.name || 'New Persona',
         avatar: persona.avatar || '',
         interests: persona.interests || [],

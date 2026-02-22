@@ -71,11 +71,16 @@ app.whenReady().then(() => {
     const persona = PersonaManager.get(personaId);
     if (persona) {
       await agentRunner.startSession(persona);
+      PersonaManager.save({ ...persona, isActive: true });
     }
   });
 
   ipcMain.handle('stop-agent', async (_, personaId: string) => {
     await agentRunner.stopSession(personaId);
+    const persona = PersonaManager.get(personaId);
+    if (persona) {
+      PersonaManager.save({ ...persona, isActive: false });
+    }
   });
 
   ipcMain.handle('get-metrics', () => {
@@ -93,7 +98,13 @@ app.whenReady().then(() => {
 
   scheduler.start();
 
-  createWindow()
+  createWindow();
+
+  agentRunner.on('activity', (activity) => {
+    BrowserWindow.getAllWindows().forEach(win => {
+      win.webContents.send('agent-activity', activity);
+    });
+  });
 
   app.on('activate', function () {
     // On macOS it's common to re-create a window in the app when the
