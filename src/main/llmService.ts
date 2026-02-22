@@ -13,7 +13,7 @@ export class LLMService {
     const apiKey = (store.get('settings.apiKey') as string) || process.env.GEMINI_API_KEY || '';
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
-      this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
+      this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     }
   }
 
@@ -26,8 +26,17 @@ export class LLMService {
     }
   }
 
+  private rateLimitedUntil = 0;
+
   async generateSearchQueries(interests: string[]): Promise<string[]> {
     try {
+      const now = Date.now();
+      if (now < this.rateLimitedUntil) {
+        const waitSec = Math.ceil((this.rateLimitedUntil - now) / 1000);
+        console.log(`Rate limited, waiting ${waitSec}s before next request...`);
+        return [];
+      }
+
       this.ensureInitialized();
       const prompt = `
         Generate 3 realistic search queries for a user interested in: ${interests.join(', ')}.
@@ -39,8 +48,15 @@ export class LLMService {
       const response = await result.response;
       const text = response.text();
       return text.split('\n').filter((q: string) => q.trim().length > 0);
-    } catch (error) {
-      console.error('Error generating search queries:', error);
+    } catch (error: any) {
+      if (error?.status === 429) {
+        const retryMatch = error?.message?.match(/retry in ([\d.]+)s/i);
+        const backoffSec = retryMatch ? Math.ceil(parseFloat(retryMatch[1])) + 5 : 60;
+        this.rateLimitedUntil = Date.now() + backoffSec * 1000;
+        console.log(`Rate limited by Gemini API. Backing off for ${backoffSec}s.`);
+      } else {
+        console.error('Error generating search queries:', error);
+      }
       return [];
     }
   }

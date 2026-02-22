@@ -8,6 +8,7 @@ interface StoreSchema {
     totalQueries: number;
     uniqueDomains: string[];
     entropyScore: number;
+    domainVisits: Record<string, number>;
   };
 }
 
@@ -22,7 +23,8 @@ const store = new Store<StoreSchema>({
     metrics: {
       totalQueries: 0,
       uniqueDomains: [],
-      entropyScore: 0
+      entropyScore: 0,
+      domainVisits: {}
     }
   }
 });

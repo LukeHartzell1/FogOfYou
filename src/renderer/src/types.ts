@@ -22,4 +22,5 @@ export interface Metrics {
   totalQueries: number;
   uniqueDomains: string[];
   entropyScore: number;
+  domainVisits: Record<string, number>;
 }
