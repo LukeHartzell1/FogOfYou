@@ -1,171 +1,102 @@
-@import './base.css';
+@import "tailwindcss";
 
+/* ── Design tokens ────────────────────────────────────── */
+:root {
+  --bg: #e6edf9;
+  --surface: #f8fbff;
+  --surface-2: #edf3ff;
+  --surface-3: #dfe9fb;
+  --border: #c8d6ee;
+  --border-2: #b5c8e9;
+  --text: #1f2a3d;
+  --text-2: #4f5f7d;
+  --text-3: #7383a6;
+  --blue: #3f7cff;
+  --blue-dim: rgba(63, 124, 255, 0.12);
+  --blue-glow: rgba(63, 124, 255, 0.28);
+  --green: #16b67a;
+  --green-dim: rgba(22, 182, 122, 0.14);
+  --purple: #8b70ff;
+  --red: #ef5a67;
+  --red-dim: rgba(239, 90, 103, 0.14);
+  --amber: #ea9a17;
+  --amber-dim: rgba(234, 154, 23, 0.15);
+  --teal: #0ea5a7;
+  --teal-dim: rgba(14, 165, 167, 0.14);
+}
+
+/* ── Reset layout from electron-vite template ─────────── */
 body {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background-image: url('./wavy-lines.svg');
-  background-size: cover;
+  display: block !important;
+  overflow: auto !important;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(63, 124, 255, 0.18), transparent 70%),
+    radial-gradient(1000px 500px at 100% 0%, rgba(14, 165, 167, 0.12), transparent 60%),
+    var(--bg) !important;
+  color: var(--text) !important;
+  background-image: none !important;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
   user-select: none;
 }
 
-code {
-  font-weight: 600;
-  padding: 3px 5px;
-  border-radius: 2px;
-  background-color: var(--color-background-mute);
-  font-family:
-    ui-monospace,
-    SFMono-Regular,
-    SF Mono,
-    Menlo,
-    Consolas,
-    Liberation Mono,
-    monospace;
-  font-size: 85%;
-}
-
 #root {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  margin-bottom: 80px;
+  display: block !important;
+  margin-bottom: 0 !important;
+  align-items: unset !important;
+  justify-content: unset !important;
+  width: 100%;
+  height: 100vh;
 }
 
-.logo {
-  margin-bottom: 20px;
-  -webkit-user-drag: none;
-  height: 128px;
-  width: 128px;
-  will-change: filter;
-  transition: filter 300ms;
+/* ── Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #9aa9c7; }
+
+/* ── Utility classes not covered by Tailwind ─────────── */
+.glass {
+  background: var(--surface);
+  border: 1px solid var(--border);
 }
 
-.logo:hover {
-  filter: drop-shadow(0 0 1.2em #6988e6aa);
+.glass-2 {
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
 }
 
-.creator {
-  font-size: 14px;
-  line-height: 16px;
-  color: var(--ev-c-text-2);
-  font-weight: 600;
-  margin-bottom: 10px;
+.glow-blue  { box-shadow: 0 0 20px var(--blue-glow); }
+.glow-green { box-shadow: 0 0 20px rgba(62,207,142,0.2); }
+.glow-red   { box-shadow: 0 0 20px rgba(248,113,113,0.2); }
+
+/* ── Pulse animation for active status ───────────────── */
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+.status-pulse { animation: status-pulse 2s ease-in-out infinite; }
+
+/* ── Fade-in ──────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fade-up 0.25s ease-out forwards; }
+
+.card-gradient {
+  background: linear-gradient(180deg, rgba(63,124,255,0.08) 0%, rgba(255,255,255,0.35) 100%), var(--surface);
 }
 
-.text {
-  font-size: 28px;
-  color: var(--ev-c-text-1);
-  font-weight: 700;
-  line-height: 32px;
-  text-align: center;
-  margin: 0 10px;
-  padding: 16px 0;
+.depth-card {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.65) inset,
+    0 8px 22px rgba(60, 88, 146, 0.08),
+    0 2px 6px rgba(44, 66, 112, 0.06);
 }
 
-.tip {
-  font-size: 16px;
-  line-height: 24px;
-  color: var(--ev-c-text-2);
-  font-weight: 600;
-}
-
-.react {
-  background: -webkit-linear-gradient(315deg, #087ea4 55%, #7c93ee);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 700;
-}
-
-.ts {
-  background: -webkit-linear-gradient(315deg, #3178c6 45%, #f0dc4e);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 700;
-}
-
-.actions {
-  display: flex;
-  padding-top: 32px;
-  margin: -6px;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-.action {
-  flex-shrink: 0;
-  padding: 6px;
-}
-
-.action a {
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-block;
-  border: 1px solid transparent;
-  text-align: center;
-  font-weight: 600;
-  white-space: nowrap;
-  border-radius: 20px;
-  padding: 0 20px;
-  line-height: 38px;
-  font-size: 14px;
-  border-color: var(--ev-button-alt-border);
-  color: var(--ev-button-alt-text);
-  background-color: var(--ev-button-alt-bg);
-}
-
-.action a:hover {
-  border-color: var(--ev-button-alt-hover-border);
-  color: var(--ev-button-alt-hover-text);
-  background-color: var(--ev-button-alt-hover-bg);
-}
-
-.versions {
-  position: absolute;
-  bottom: 30px;
-  margin: 0 auto;
-  padding: 15px 0;
-  font-family: 'Menlo', 'Lucida Console', monospace;
-  display: inline-flex;
-  overflow: hidden;
-  align-items: center;
-  border-radius: 22px;
-  background-color: #202127;
-  backdrop-filter: blur(24px);
-}
-
-.versions li {
-  display: block;
-  float: left;
-  border-right: 1px solid var(--ev-c-gray-1);
-  padding: 0 20px;
-  font-size: 14px;
-  line-height: 14px;
-  opacity: 0.8;
-  &:last-child {
-    border: none;
-  }
-}
-
-@media (max-width: 720px) {
-  .text {
-    font-size: 20px;
-  }
-}
-
-@media (max-width: 620px) {
-  .versions {
-    display: none;
-  }
-}
-
-@media (max-width: 350px) {
-  .tip,
-  .actions {
-    display: none;
-  }
+.depth-panel {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.55) inset,
+    0 10px 30px rgba(56, 84, 136, 0.1);
 }
