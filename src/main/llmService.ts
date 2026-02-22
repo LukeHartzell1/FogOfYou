@@ -52,7 +52,7 @@ export class LLMService {
   }
 
   private initialize() {
-    const apiKey = (store.get('settings.apiKey') as string) || process.env.GEMINI_API_KEY || '';
+    const apiKey = process.env.GEMINI_API_KEY || (store.get('settings.apiKey') as string) || '';
     if (apiKey) {
       this.genAI = new GoogleGenerativeAI(apiKey);
       this.model = this.genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
